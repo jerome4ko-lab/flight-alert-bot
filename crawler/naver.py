@@ -45,11 +45,24 @@ async def get_screenshot(origin: str, destination: str, date: str) -> str | None
 
             await page.goto(url, wait_until="domcontentloaded", timeout=30000)
 
-            # 결과 렌더 대기 (네이버 항공권은 검색 결과 로딩에 시간 필요)
-            await asyncio.sleep(random.uniform(8, 12))
+            # 네이버 국제선 검색 결과 로딩 대기 (스켈레톤 사라질 때까지)
+            try:
+                await page.wait_for_function(
+                    """() => {
+                        const text = document.body.innerText || '';
+                        const hasPrice = /[0-9,]{4,}\\s*원/.test(text);
+                        const stillLoading = document.querySelectorAll('[class*=skeleton], [class*=Skeleton]').length > 0;
+                        return hasPrice && !stillLoading;
+                    }""",
+                    timeout=60000,
+                )
+                print("검색 결과 로딩 완료")
+            except Exception:
+                print("결과 대기 타임아웃 — 현재 화면 캡처")
 
+            await asyncio.sleep(2)
             await page.evaluate("window.scrollBy(0, 200)")
-            await asyncio.sleep(random.uniform(2, 3))
+            await asyncio.sleep(1)
 
             os.makedirs("data", exist_ok=True)
             await page.screenshot(path=SCREENSHOT_PATH, full_page=False)
