@@ -6,10 +6,10 @@ from playwright.async_api import async_playwright
 SCREENSHOT_PATH = "data/screenshot.png"
 
 async def get_screenshot(origin: str, destination: str, date: str) -> str | None:
+    ymd = date.replace("-", "")
     url = (
-        f"https://www.skyscanner.co.kr/transport/flights/"
-        f"{origin}/{destination}/{date.replace('-', '')}/"
-        f"?adults=1&currency=KRW"
+        f"https://flight.naver.com/flights/international/"
+        f"{origin}-{destination}-{ymd}?adult=1&fareType=Y"
     )
 
     print(f"접속 URL: {url}")
@@ -22,9 +22,8 @@ async def get_screenshot(origin: str, destination: str, date: str) -> str | None
                     "--no-sandbox",
                     "--disable-setuid-sandbox",
                     "--disable-blink-features=AutomationControlled",
-                    "--disable-infobars",
                     "--window-size=1920,1080",
-                ]
+                ],
             )
 
             context = await browser.new_context(
@@ -38,29 +37,20 @@ async def get_screenshot(origin: str, destination: str, date: str) -> str | None
                 timezone_id="Asia/Seoul",
             )
 
-            # 봇 감지 우회
-            await context.add_init_script("""
-                Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-                Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3] });
-                Object.defineProperty(navigator, 'languages', { get: () => ['ko-KR', 'ko', 'en-US'] });
-            """)
+            await context.add_init_script(
+                "Object.defineProperty(navigator, 'webdriver', { get: () => undefined });"
+            )
 
             page = await context.new_page()
 
-            # 랜덤 딜레이 (인간처럼)
-            await asyncio.sleep(random.uniform(1, 3))
-            await page.goto(url, wait_until="networkidle", timeout=30000)
+            await page.goto(url, wait_until="domcontentloaded", timeout=30000)
 
-            # 페이지 로딩 대기
-            await asyncio.sleep(random.uniform(4, 7))
+            # 결과 렌더 대기 (네이버 항공권은 검색 결과 로딩에 시간 필요)
+            await asyncio.sleep(random.uniform(8, 12))
 
-            # 스크롤 (인간처럼)
-            await page.mouse.move(random.randint(400, 800), random.randint(200, 400))
-            await asyncio.sleep(random.uniform(0.5, 1.5))
-            await page.evaluate("window.scrollBy(0, 300)")
-            await asyncio.sleep(random.uniform(2, 4))
+            await page.evaluate("window.scrollBy(0, 200)")
+            await asyncio.sleep(random.uniform(2, 3))
 
-            # 스크린샷
             os.makedirs("data", exist_ok=True)
             await page.screenshot(path=SCREENSHOT_PATH, full_page=False)
             print(f"스크린샷 저장: {SCREENSHOT_PATH}")

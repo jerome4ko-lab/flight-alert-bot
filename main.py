@@ -1,7 +1,7 @@
 import asyncio
 import json
 import os
-from crawler.skyscanner import get_screenshot
+from crawler.naver import get_screenshot
 from parser.vision import parse_price
 from notifier.telegram import send_message, send_photo
 from datetime import datetime
@@ -41,7 +41,7 @@ async def check_price():
     # 스크린샷 캡처
     screenshot_path = await get_screenshot(origin, destination, full_date)
     if not screenshot_path:
-        await send_message("⚠️ 스카이스캐너 캡처 실패. 봇 감지 또는 네트워크 오류.")
+        await send_message("⚠️ 네이버 항공권 캡처 실패. 봇 감지 또는 네트워크 오류.")
         return
 
     # Vision으로 가격 파싱

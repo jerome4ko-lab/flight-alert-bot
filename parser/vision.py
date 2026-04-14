@@ -10,7 +10,7 @@ async def parse_price(screenshot_path: str) -> int | None:
         with open(screenshot_path, "rb") as f:
             image_data = base64.standard_b64encode(f.read()).decode("utf-8")
 
-        prompt = """이 스카이스캐너 항공권 검색 결과 화면에서 가장 저렴한 항공권 가격을 찾아주세요.
+        prompt = """이 네이버 항공권 검색 결과 화면에서 가장 저렴한 항공권 가격을 찾아주세요.
 
 다음 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요:
 {"price": 숫자, "currency": "KRW", "found": true}
