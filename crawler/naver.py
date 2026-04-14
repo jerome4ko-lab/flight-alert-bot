@@ -43,26 +43,32 @@ async def get_screenshot(origin: str, destination: str, date: str) -> str | None
 
             page = await context.new_page()
 
-            await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            print("초기 DOM 로드 완료, 결과 대기 중...")
 
-            # 네이버 국제선 검색 결과 로딩 대기 (스켈레톤 사라질 때까지)
+            # 1단계: 최소 15초 기본 대기
+            await asyncio.sleep(15)
+
+            # 2단계: 가격 텍스트 등장까지 최대 120초 polling
             try:
                 await page.wait_for_function(
                     """() => {
                         const text = document.body.innerText || '';
-                        const hasPrice = /[0-9,]{4,}\\s*원/.test(text);
-                        const stillLoading = document.querySelectorAll('[class*=skeleton], [class*=Skeleton]').length > 0;
-                        return hasPrice && !stillLoading;
+                        const priceMatches = text.match(/[0-9,]{4,}\\s*원/g) || [];
+                        const stillLoading = document.querySelectorAll('[class*=skeleton], [class*=Skeleton], [class*=loading], [class*=Loading]').length > 0;
+                        return priceMatches.length >= 2 && !stillLoading;
                     }""",
-                    timeout=60000,
+                    timeout=120000,
+                    polling=2000,
                 )
                 print("검색 결과 로딩 완료")
-            except Exception:
-                print("결과 대기 타임아웃 — 현재 화면 캡처")
+            except Exception as e:
+                print(f"결과 대기 타임아웃: {e}")
 
-            await asyncio.sleep(2)
+            # 3단계: 렌더 안정화 추가 대기
+            await asyncio.sleep(5)
             await page.evaluate("window.scrollBy(0, 200)")
-            await asyncio.sleep(1)
+            await asyncio.sleep(2)
 
             os.makedirs("data", exist_ok=True)
             await page.screenshot(path=SCREENSHOT_PATH, full_page=False)
