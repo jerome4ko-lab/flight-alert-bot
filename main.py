@@ -3,7 +3,7 @@ import json
 import os
 from crawler.skyscanner import get_screenshot
 from parser.vision import parse_price
-from notifier.telegram import send_message
+from notifier.telegram import send_message, send_photo
 from datetime import datetime
 
 CONFIG_PATH = "data/config.json"
@@ -47,7 +47,7 @@ async def check_price():
     # Vision으로 가격 파싱
     price = await parse_price(screenshot_path)
     if not price:
-        await send_message("⚠️ 가격 파싱 실패. 스크린샷을 확인하세요.")
+        await send_photo(screenshot_path, "⚠️ 가격 파싱 실패. 실제 화면:")
         return
 
     print(f"현재 최저가: {price:,}원")

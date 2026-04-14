@@ -17,6 +17,15 @@ async def send_message(text: str):
             json={"chat_id": TELEGRAM_CHAT_ID, "text": text, "parse_mode": "HTML"},
         )
 
+async def send_photo(photo_path: str, caption: str = ""):
+    async with httpx.AsyncClient(timeout=30) as client:
+        with open(photo_path, "rb") as f:
+            await client.post(
+                f"{BASE_URL}/sendPhoto",
+                data={"chat_id": TELEGRAM_CHAT_ID, "caption": caption},
+                files={"photo": f},
+            )
+
 def load_config():
     with open(CONFIG_PATH, "r") as f:
         return json.load(f)
